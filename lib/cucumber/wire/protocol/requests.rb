@@ -1,5 +1,6 @@
 require 'cucumber/wire/request_handler'
 require 'cucumber/step_argument'
+require 'cucumber/invoke_results'
 
 module Cucumber
   module Wire
@@ -63,8 +64,21 @@ module Cucumber
             super(request_params)
           end
 
+          def handle_fail(params)
+            begin
+              # Raise it to get the stacktrace
+              raise @connection.exception(params)
+            rescue Exception => exception
+              return FailedInvokeResult.new(params, exception)
+            end
+          end
+
+          def handle_success(params)
+            return PassedInvokeResult.new(params)
+          end
+
           def handle_pending(message)
-            raise Pending, message || "TODO"
+            return PendingInvokeResult.new(message || "TODO")
           end
 
           def handle_diff!(tables)
